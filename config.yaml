@@ -1,0 +1,67 @@
+# Copy from config.example.yaml and fill in your values
+
+api_football:
+  base_url: "https://v3.football.api-sports.io"
+  api_key: "YOUR_API_FOOTBALL_KEY"
+
+telegram:
+  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"
+  chat_id: "YOUR_CHAT_ID"
+
+league_ids:
+  - 7293
+  - 7333
+  - 7334
+  - 7332
+  - 7400
+  - 7338
+  - 7339
+  - 7335
+  - 7342
+  - 7351
+  - 7352
+  - 7920
+  - 7294
+  - 7286
+  - 7304
+
+poll_interval_seconds: 120
+
+# Schedule: all start/end times are in the timezone below (e.g. 12:00 = noon UK).
+# Use the times you sent for each day; this is just an example.
+schedule:
+  timezone: "Europe/London"
+  monday_friday:
+    start: "18:00"
+    end: "22:30"
+  saturday:
+    start: "12:00"
+    end: "22:30"
+  sunday:
+    start: "12:00"
+    end: "21:30"
+
+rules:
+  bookmaker: "Bet365"
+
+  over_05_first_half:
+    enabled: true
+    market_name: "Over 0.5 goals – 1st half"
+    min_odds: 1.50
+    max_minute: 45
+    require_score_0_0: true
+
+  btts_yes:
+    enabled: true
+    market_name: "Both Teams To Score – Yes"
+    min_odds: 2.00
+    min_minute: 1
+    max_minute: 90
+    require_market_alive: true
+
+  over_05_full_at_60:
+    enabled: true
+    market_name: "Over 0.5 goals – full match"
+    min_odds: 1.80
+    from_minute: 60
+    require_score_0_0: true

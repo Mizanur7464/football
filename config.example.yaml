@@ -1,0 +1,65 @@
+# Copy to config.yaml and fill in your values
+
+# API-Football (https://www.api-football.com/)
+api_football:
+  base_url: "https://v3.football.api-sports.io"
+  api_key: "YOUR_API_FOOTBALL_KEY"
+
+# Telegram
+telegram:
+  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"
+  chat_id: "YOUR_CHAT_ID"  # Can be user ID or group ID
+
+# Leagues to monitor (API-Football league IDs)
+# https://www.api-football.com/documentation-v3#tag/Leagues
+league_ids:
+  - 39   # Premier League
+  - 140  # La Liga
+  - 135  # Serie A
+  - 78   # Bundesliga
+  - 61   # Ligue 1
+  # Add 15+ leagues as needed
+
+# Polling interval in seconds (respect API rate limits)
+poll_interval_seconds: 30
+
+# Schedule (local time, Europe/London by default)
+schedule:
+  timezone: "Europe/London"
+  monday_friday:
+    start: "18:00"   # 6pm
+    end: "22:30"     # 10:30pm
+  saturday:
+    start: "12:00"   # 12pm
+    end: "22:30"     # 10:30pm
+  sunday:
+    start: "12:00"   # 12pm
+    end: "21:30"     # 9:30pm
+
+# Alert rules (can be updated without code change)
+rules:
+  # Preferred bookmaker name for odds (e.g. Bet365, Pinnacle).
+  # If empty, all available bookmakers will be used.
+  bookmaker: "Bet365"
+
+  over_05_first_half:
+    enabled: true
+    market_name: "Over 0.5 goals – 1st half"
+    min_odds: 1.50
+    max_minute: 45
+    require_score_0_0: true
+
+  btts_yes:
+    enabled: true
+    market_name: "Both Teams To Score – Yes"
+    min_odds: 2.00
+    min_minute: 1
+    max_minute: 90
+    require_market_alive: true  # At least one team hasn't scored yet
+
+  over_05_full_at_60:
+    enabled: true
+    market_name: "Over 0.5 goals – full match"
+    min_odds: 1.80
+    from_minute: 60
+    require_score_0_0: true
