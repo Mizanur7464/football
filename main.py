@@ -176,11 +176,12 @@ def main():
                     logger.warning("Failed to send schedule start message.")
             in_window_prev = in_window
 
-            # Always handle Telegram commands (/start, /alerts_on, /alerts_off)
+            # Always handle Telegram commands (/start, /alerts_on, /alerts_off, /status)
             last_update_id, alerts_enabled = handle_telegram_commands(
                 bot_token,
                 last_update_id,
                 alerts_enabled,
+                in_schedule_window=in_window,
             )
 
             # If alerts are paused, just sleep a bit and keep listening for commands

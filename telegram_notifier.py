@@ -85,11 +85,13 @@ def handle_telegram_commands(
     bot_token: str,
     last_update_id: Optional[int],
     alerts_enabled: bool,
+    in_schedule_window: Optional[bool] = None,
 ) -> Tuple[Optional[int], bool]:
     """
     Poll Telegram getUpdates and:
     - Reply with a welcome message to any chat that sends /start
     - Toggle alerts on/off with /alerts_on and /alerts_off
+    - /status: reply with current alerts and schedule state
     Returns (latest_update_id, alerts_enabled_flag).
     """
     url = f"https://api.telegram.org/bot{bot_token}/getUpdates"
@@ -135,18 +137,42 @@ def handle_telegram_commands(
             )
             send_telegram(bot_token, str(chat_id), welcome)
         elif text in ("/alerts_on", "/start_alerts"):
-            current_enabled = True
-            send_telegram(
-                bot_token,
-                str(chat_id),
-                "Alerts have been ENABLED. Live matches will be monitored (including outside the schedule window).",
-            )
+            if current_enabled:
+                send_telegram(
+                    bot_token,
+                    str(chat_id),
+                    "Alerts are already ON. Live matches are being monitored.",
+                )
+            else:
+                current_enabled = True
+                send_telegram(
+                    bot_token,
+                    str(chat_id),
+                    "Alerts have been ENABLED. Live matches will be monitored (including outside the schedule window).",
+                )
         elif text in ("/alerts_off", "/stop_alerts"):
-            current_enabled = False
-            send_telegram(
-                bot_token,
-                str(chat_id),
-                "Alerts have been PAUSED. The bot will not poll matches until you send /alerts_on.",
-            )
+            if not current_enabled:
+                send_telegram(
+                    bot_token,
+                    str(chat_id),
+                    "Alerts are already OFF. Send /alerts_on to enable.",
+                )
+            else:
+                current_enabled = False
+                send_telegram(
+                    bot_token,
+                    str(chat_id),
+                    "Alerts have been PAUSED. The bot will not poll matches until you send /alerts_on.",
+                )
+        elif text == "/status":
+            alert_state = "ON – you will receive match alerts when rules trigger." if current_enabled else "OFF – send /alerts_on to enable."
+            lines = [
+                "Bot status",
+                "──────────",
+                f"Alerts: {alert_state}",
+            ]
+            if in_schedule_window is not None:
+                lines.append("Schedule window: " + ("active" if in_schedule_window else "inactive"))
+            send_telegram(bot_token, str(chat_id), "\n".join(lines))
 
     return new_last_id, current_enabled
