@@ -133,7 +133,12 @@ def handle_telegram_commands(
         if text == "/start":
             welcome = (
                 "Welcome! This is the football alerts bot.\n"
-                "You will receive match alerts here when the configured rules are triggered."
+                "You will receive match alerts here when the configured rules are triggered.\n\n"
+                "Commands:\n"
+                "/start – Show this message and commands\n"
+                "/alerts_on – Turn alerts ON (monitor live matches)\n"
+                "/alerts_off – Turn alerts OFF (pause monitoring)\n"
+                "/status – Check if alerts are currently ON or OFF"
             )
             send_telegram(bot_token, str(chat_id), welcome)
         elif text in ("/alerts_on", "/start_alerts"):
