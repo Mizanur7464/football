@@ -152,6 +152,7 @@ def main():
 
             # Check schedule window (times in config are in schedule.timezone, e.g. Europe/London)
             in_window = in_active_window(schedule_cfg, now)
+            logger.debug("Schedule window state: in_window=%s (UTC now=%s)", in_window, now.isoformat())
 
             # If a new schedule window just started, auto-enable alerts again
             # and notify the main chat that scheduled monitoring has started.
@@ -193,15 +194,22 @@ def main():
             # When alerts are ON (schedule auto or manual /alerts_on), always poll – schedule does not block
             # Throttle API polling to poll_interval seconds
             now_ts = time.time()
-            if now_ts - last_poll_ts < poll_interval:
+            since_last = now_ts - last_poll_ts
+            if since_last < poll_interval:
+                logger.debug(
+                    "Skipping API poll: only %.1fs since last poll (interval=%ss)",
+                    since_last,
+                    poll_interval,
+                )
                 time.sleep(base_sleep)
                 continue
 
+            logger.info("Polling API-Football for live fixtures (leagues=%s)", len(league_ids))
             fixtures = client.get_live_fixtures(league_ids)
             last_poll_ts = now_ts
 
             if not fixtures:
-                logger.debug("No live fixtures right now.")
+                logger.info("No live fixtures returned from API-Football.")
                 time.sleep(base_sleep)
                 continue
 
@@ -211,11 +219,15 @@ def main():
                 if not fixture_id:
                     continue
                 odds_list = client.get_fixture_odds(fixture_id, live=True)
+                if not odds_list:
+                    logger.debug("No odds data returned for fixture_id=%s", fixture_id)
                 # API returns list of {league, fixture, bookmakers}; we need bookmakers flattened for odds
                 odds_for_rules = []
                 for o in odds_list:
                     odds_for_rules.append(o)
                 triggered = run_rules(fixture_data, odds_for_rules, rules_cfg)
+                if not triggered:
+                    logger.debug("No rules triggered for fixture_id=%s", fixture_id)
                 for rule_key, market_name in triggered:
                     if tracker.already_sent(fixture_id, rule_key):
                         continue

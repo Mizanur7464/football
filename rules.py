@@ -99,18 +99,49 @@ def check_over_05_first_half(
 ) -> bool:
     """Over 0.5 First Half: odds >= min_odds, minute < 45, score 0-0."""
     if not rule.get("enabled", True):
+        logger.debug("Rule over_05_first_half disabled in config")
         return False
     minute = _fixture_minute(fixture)
     if minute >= (rule.get("max_minute") or 45):
+        logger.debug(
+            "Rule over_05_first_half not triggered: minute %s >= max_minute %s",
+            minute,
+            rule.get("max_minute") or 45,
+        )
         return False
     effective_bookmaker = rule.get("bookmaker") or bookmaker_name
     home, away = _fixture_score(fixture)
     if rule.get("require_score_0_0", True) and (home != 0 or away != 0):
+        logger.debug(
+            "Rule over_05_first_half not triggered: score is %s-%s, require_score_0_0=True",
+            home,
+            away,
+        )
         return False
     odds = _odds_for_over_05_first_half(odds_response, effective_bookmaker)
     if odds is None:
+        logger.debug(
+            "Rule over_05_first_half not triggered: no odds found for bookmaker=%s",
+            effective_bookmaker,
+        )
         return False
-    return odds >= (rule.get("min_odds") or 1.50)
+    min_odds = rule.get("min_odds") or 1.50
+    if odds < min_odds:
+        logger.debug(
+            "Rule over_05_first_half not triggered: odds %.3f < min_odds %.3f",
+            odds,
+            min_odds,
+        )
+        return False
+    logger.info(
+        "Rule over_05_first_half TRIGGERED: minute=%s score=%s-%s odds=%.3f (min_odds=%.3f)",
+        minute,
+        home,
+        away,
+        odds,
+        min_odds,
+    )
+    return True
 
 
 def check_btts_yes(
@@ -121,19 +152,51 @@ def check_btts_yes(
 ) -> bool:
     """BTTS Yes: odds >= min_odds, 1'-90', market alive (at least one team 0)."""
     if not rule.get("enabled", True):
+        logger.debug("Rule btts_yes disabled in config")
         return False
     effective_bookmaker = rule.get("bookmaker") or bookmaker_name
     minute = _fixture_minute(fixture)
     if minute < (rule.get("min_minute") or 1) or minute > (rule.get("max_minute") or 90):
+        logger.debug(
+            "Rule btts_yes not triggered: minute %s outside [%s, %s]",
+            minute,
+            rule.get("min_minute") or 1,
+            rule.get("max_minute") or 90,
+        )
         return False
     home, away = _fixture_score(fixture)
     if rule.get("require_market_alive", True):
         if home > 0 and away > 0:
+            logger.debug(
+                "Rule btts_yes not triggered: both teams already scored (score=%s-%s)",
+                home,
+                away,
+            )
             return False  # both scored = market dead
     odds = _odds_for_btts_yes(odds_response, effective_bookmaker)
     if odds is None:
+        logger.debug(
+            "Rule btts_yes not triggered: no odds found for bookmaker=%s",
+            effective_bookmaker,
+        )
         return False
-    return odds >= (rule.get("min_odds") or 2.00)
+    min_odds = (rule.get("min_odds") or 2.00)
+    if odds < min_odds:
+        logger.debug(
+            "Rule btts_yes not triggered: odds %.3f < min_odds %.3f",
+            odds,
+            min_odds,
+        )
+        return False
+    logger.info(
+        "Rule btts_yes TRIGGERED: minute=%s score=%s-%s odds=%.3f (min_odds=%.3f)",
+        minute,
+        home,
+        away,
+        odds,
+        min_odds,
+    )
+    return True
 
 
 def check_over_05_full_at_60(
@@ -144,18 +207,49 @@ def check_over_05_full_at_60(
 ) -> bool:
     """Over 0.5 Full at 60': minute >= 60, score 0-0, odds >= min_odds."""
     if not rule.get("enabled", True):
+        logger.debug("Rule over_05_full_at_60 disabled in config")
         return False
     effective_bookmaker = rule.get("bookmaker") or bookmaker_name
     minute = _fixture_minute(fixture)
     if minute < (rule.get("from_minute") or 60):
+        logger.debug(
+            "Rule over_05_full_at_60 not triggered: minute %s < from_minute %s",
+            minute,
+            rule.get("from_minute") or 60,
+        )
         return False
     home, away = _fixture_score(fixture)
     if rule.get("require_score_0_0", True) and (home != 0 or away != 0):
+        logger.debug(
+            "Rule over_05_full_at_60 not triggered: score is %s-%s, require_score_0_0=True",
+            home,
+            away,
+        )
         return False
     odds = _odds_for_over_05_full(odds_response, effective_bookmaker)
     if odds is None:
+        logger.debug(
+            "Rule over_05_full_at_60 not triggered: no odds found for bookmaker=%s",
+            effective_bookmaker,
+        )
         return False
-    return odds >= (rule.get("min_odds") or 1.80)
+    min_odds = (rule.get("min_odds") or 1.80)
+    if odds < min_odds:
+        logger.debug(
+            "Rule over_05_full_at_60 not triggered: odds %.3f < min_odds %.3f",
+            odds,
+            min_odds,
+        )
+        return False
+    logger.info(
+        "Rule over_05_full_at_60 TRIGGERED: minute=%s score=%s-%s odds=%.3f (min_odds=%.3f)",
+        minute,
+        home,
+        away,
+        odds,
+        min_odds,
+    )
+    return True
 
 
 RULE_CHECKERS = {
