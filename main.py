@@ -126,7 +126,7 @@ def main():
 
     # One-time welcome message when the bot process starts
     welcome_text = (
-        "Football alert bot is now running.\\n"
+        "Football alert bot is now running.\n"
         "You will receive alerts here when your configured rules are triggered "
         "on live matches."
     )
@@ -209,7 +209,7 @@ def main():
                 fixture_id = fixture_obj.get("id")
                 if not fixture_id:
                     continue
-                odds_list = client.get_fixture_odds(fixture_id)
+                odds_list = client.get_fixture_odds(fixture_id, live=True)
                 # API returns list of {league, fixture, bookmakers}; we need bookmakers flattened for odds
                 odds_for_rules = []
                 for o in odds_list:

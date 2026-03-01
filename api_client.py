@@ -62,10 +62,11 @@ class APIFootballClient:
                 logger.warning("League %s: %s", league_id, e)
         return all_fixtures
 
-    def get_fixture_odds(self, fixture_id: int) -> list[dict]:
-        """Get odds for a fixture (all bookmakers/bets)."""
+    def get_fixture_odds(self, fixture_id: int, live: bool = False) -> list[dict]:
+        """Get odds for a fixture. Use live=True for in-play (odds/live) so Bet365 live odds are returned."""
+        endpoint = "odds/live" if live else "odds"
         try:
-            data = self._request("odds", {"fixture": fixture_id})
+            data = self._request(endpoint, {"fixture": fixture_id})
             return data.get("response") or []
         except APIFootballError:
             return []

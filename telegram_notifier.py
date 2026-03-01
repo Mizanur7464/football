@@ -139,7 +139,7 @@ def handle_telegram_commands(
             send_telegram(
                 bot_token,
                 str(chat_id),
-                "Alerts have been ENABLED. Live matches will be monitored within the configured time window.",
+                "Alerts have been ENABLED. Live matches will be monitored (including outside the schedule window).",
             )
         elif text in ("/alerts_off", "/stop_alerts"):
             current_enabled = False
