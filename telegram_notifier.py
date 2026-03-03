@@ -3,11 +3,16 @@ Send formatted alerts to Telegram.
 """
 
 import logging
+import time
 from typing import Optional, Tuple
 
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Retry Telegram API calls on connection errors so alerts get through
+TELEGRAM_MAX_RETRIES = 3
+TELEGRAM_RETRY_DELAY = 2
 
 
 def format_alert(
@@ -30,30 +35,29 @@ def format_alert(
 
 
 def send_telegram(bot_token: str, chat_id: str, text: str) -> bool:
-    """Send message to Telegram chat. Returns True on success."""
+    """Send message to Telegram chat. Retries on connection errors. Returns True on success."""
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     chat_id = str(chat_id).strip()
-    try:
-        r = requests.post(
-            url,
-            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
-            timeout=10,
-        )
-        if r.status_code != 200:
-            logger.warning("Telegram send failed: %s %s", r.status_code, r.text)
-            # Retry without parse_mode in case of format issue
-            r = requests.post(
-                url,
-                json={"chat_id": chat_id, "text": text},
-                timeout=10,
-            )
-        ok = r.status_code == 200
-        if not ok:
-            logger.warning("Telegram send failed: %s", r.text)
-        return ok
-    except Exception as e:
-        logger.warning("Telegram send error: %s", e)
-        return False
+    payloads = [
+        {"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
+        {"chat_id": chat_id, "text": text},
+    ]
+    last_err = None
+    for attempt in range(TELEGRAM_MAX_RETRIES):
+        for payload in payloads:
+            try:
+                r = requests.post(url, json=payload, timeout=15)
+                if r.status_code == 200:
+                    return True
+                logger.warning("Telegram send failed: %s %s", r.status_code, r.text[:200])
+            except Exception as e:
+                last_err = e
+                logger.warning("Telegram send error (attempt %s): %s", attempt + 1, e)
+        if attempt < TELEGRAM_MAX_RETRIES - 1:
+            time.sleep(TELEGRAM_RETRY_DELAY)
+    if last_err:
+        logger.warning("Telegram send gave up after %s retries: %s", TELEGRAM_MAX_RETRIES, last_err)
+    return False
 
 
 def send_alert(
@@ -101,12 +105,21 @@ def handle_telegram_commands(
     if last_update_id is not None:
         params["offset"] = last_update_id + 1
 
-    try:
-        r = requests.get(url, params=params, timeout=15)
-        r.raise_for_status()
-        data = r.json()
-    except Exception as e:
-        logger.warning("Telegram getUpdates error: %s", e)
+    last_err = None
+    for attempt in range(TELEGRAM_MAX_RETRIES):
+        try:
+            r = requests.get(url, params=params, timeout=20)
+            r.raise_for_status()
+            data = r.json()
+            break
+        except Exception as e:
+            last_err = e
+            logger.warning("Telegram getUpdates error (attempt %s): %s", attempt + 1, e)
+            if attempt < TELEGRAM_MAX_RETRIES - 1:
+                time.sleep(TELEGRAM_RETRY_DELAY)
+    else:
+        if last_err:
+            logger.warning("Telegram getUpdates gave up after %s retries", TELEGRAM_MAX_RETRIES)
         return last_update_id, alerts_enabled
 
     results = data.get("result") or []
