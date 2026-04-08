@@ -1,67 +1,139 @@
-# Copy from config.example.yaml and fill in your values
+# Fill telethon + source. Put your 4 group IDs under each route's target_chat_id.
 
-api_football:
-  base_url: "https://v3.football.api-sports.io"
-  api_key: "YOUR_API_FOOTBALL_KEY"
+telethon:
+  api_id: 0
+  api_hash: "your_api_hash_here"
+  session_name: "relay_session"
 
-telegram:
-  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"
-  chat_id: "YOUR_CHAT_ID"
+relay:
+  # যেসব বটের প্রাইভেট চ্যাট শুনবেন — প্রতিটির আইডি (শুধু ইংরেজি সংখ্যা 0-9).
+  # আইডি বের করতে: main.py চালু রেখে সেই বটের চ্যাটে (রিলে লগইন অ্যাকাউন্ট দিয়ে) /chatid পাঠান।
+  source_chat_ids:
+    - "8458387397"
+    - "888380215"   # /chatid রিপ্লাই থেকে কপি
 
-league_ids:
-  - 7293
-  - 7333
-  - 7334
-  - 7332
-  - 7400
-  - 7338
-  - 7339
-  - 7335
-  - 7342
-  - 7351
-  - 7352
-  - 7920
-  - 7294
-  - 7286
-  - 7304
+  # Used only if relay.routes is empty OR as extra default when no routes (see main.py)
+  target_chat_id: ""
 
-poll_interval_seconds: 120
+  control_chat_id: ""
 
-# Schedule: all start/end times are in the timezone below (e.g. 12:00 = noon UK).
-# Use the times you sent for each day; this is just an example.
-schedule:
-  timezone: "Europe/London"
-  monday_friday:
-    start: "18:00"
-    end: "22:30"
-  saturday:
-    start: "12:00"
-    end: "22:30"
-  sunday:
-    start: "12:00"
-    end: "21:30"
+  # Bet Type -> one group each (first match wins). Order matters: put more specific rules first.
+  routes:
+    - name: "1H Goal (Yes) Opportunity"
+      match:
+        contains: ["1H Goal (Yes) Opportunity"]
+      format:
+        # এই রুলে ম্যাচ করলে মেসেজটা নিচের টেমপ্লেটের মতো করে পাঠাবে
+        bet_type: "Over 1 FHG"
+        template: |-
+          Bet Type: {{bet_type}}
+          🏆 {{league}}
+          🆚 Team: {{team_line}}
+          🕛 Mins Played: {{mins_played}}
+          📈 Live Odds: {{live_odds}}
+          📊Match Stats:
+          Attacks: {{attacks}}
+          Dang. Att: {{dang_att}}
+          Shots: {{shots}}
+          SoT: {{sot}}
+          Corners: {{corners}}
+          Possession: {{possession}}
+      target_chat_id: "https://t.me/+j5N8gUPQfjc1MzY0"
 
-rules:
-  bookmaker: "Bet365"
+    - name: "1.5+ Goals Opportunity"
+      match:
+        contains: ["1.5+ Goals Opportunity"]
+      format:
+        bet_type: "1.5+ Goals"
+        template: |-
+          Bet Type: {{bet_type}}
+          🏆 {{league}}
+          🆚 Team: {{team_line}}
+          🕛 Mins Played: {{mins_played}}
+          📈 Live Odds: {{live_odds}}
+          📊Match Stats:
+          Goals: {{goals}}
+          Attacks: {{attacks}}
+          Dang. Att: {{dang_att}}
+          Shots: {{shots}}
+          Possession: {{possession}}
+      target_chat_id: "https://t.me/+NznYT3OlS5IwNDM0"
 
-  over_05_first_half:
-    enabled: true
-    market_name: "Over 0.5 goals – 1st half"
-    min_odds: 1.50
-    max_minute: 45
-    require_score_0_0: true
+    - name: "BTTS Opportunity"
+      match:
+        contains: ["BTTS Opportunity"]
+      format:
+        bet_type: "BTTS"
+        template: |-
+          Bet Type: {{bet_type}}
+          🏆 {{league}}
+          🆚 Team: {{team_line}}
+          🕛 Mins Played: {{mins_played}}
+          📉 Pre-Match Probability: {{pre_match_probability}}
+          📈 Live Odds: {{live_odds}}
+          📊Match Stats:
+          Goals: {{goals}}
+          Attacks: {{attacks}}
+          Dang. Att: {{dang_att}}
+          Shots: {{shots}}
+          Possession: {{possession}}
+      target_chat_id: "https://t.me/+IANm1dK0G6BiZDc0"
 
-  btts_yes:
-    enabled: true
-    market_name: "Both Teams To Score – Yes"
-    min_odds: 2.00
-    min_minute: 1
-    max_minute: 90
-    require_market_alive: true
+    # ইয়েলো কার্ড বট: 🟨 New Foul Alert (3) — শুধু ওই বটের চ্যাট থেকে
+    - name: "New Foul Alert (Yellow Card bot)"
+      match:
+        contains: ["New Foul Alert"]
+      source_chat_ids:
+        - "888380215"
+      format:
+        bet_type: "Yellow Card"
+        template: |-
+          Bet Type: {{bet_type}}
+          🏆 {{league}}
+          🆚 Team: {{team_line}}
+          🕛 Mins Played: {{mins_played}}
+          👕 Player Name: {{player_name}}
+          #️⃣ Number of Fouls: {{num_fouls}}
+          ▶️ Foul Times: {{foul_times}}
+          📈 Live Odds: {{live_odds}}
+          🙋🏾‍♂️ Referee: {{referee}}
+      target_chat_id: "https://t.me/+jFIkgl-i638yYTM0"
 
-  over_05_full_at_60:
-    enabled: true
-    market_name: "Over 0.5 goals – full match"
-    min_odds: 1.80
-    from_minute: 60
-    require_score_0_0: true
+    - name: "Over 1 FHG"
+      match:
+        regex: 'Bet Type:\s*Over\s*1\s*FHG'
+      target_chat_id: "YOUR_GROUP_ID_OVER_1_FHG"
+
+    - name: "BTTS"
+      match:
+        regex: 'Bet Type:.*BTTS'
+      target_chat_id: "YOUR_GROUP_ID_BTTS"
+
+    - name: "1.5+ Goals"
+      match:
+        regex: 'Bet Type:.*1\.5\s*\+?\s*Goals'
+      target_chat_id: "YOUR_GROUP_ID_1_5_GOALS"
+
+    # Yellow Card from a *different* bot: uncomment source_chat_ids + put that bot's chat id
+    # (same id must appear in relay.source_chat_ids above).
+    - name: "Yellow Card"
+      match:
+        regex: 'Bet Type:.*Yellow\s*Card'
+      # source_chat_ids:
+      #   - "OTHER_BOT_CHAT_ID"
+      target_chat_id: "YOUR_GROUP_ID_YELLOW_CARD"
+
+  # If no route matches, send here (optional). Leave empty to skip unmatched messages.
+  fallback_target_chat_id: ""
+
+  # Same-chat noise control (optional). Applied to every message from source before routes.
+  # filter:
+  #   require_any_contains: ["Bet Type"]
+  #   # require_regex: "Bet Type:"
+  #   skip_if_any_contains: ["promo", "unsubscribe"]
+  #   # skip_if_regex: "(?i)spam"
+
+transform:
+  prepend_text: ""
+  append_text: ""
+  replace: []

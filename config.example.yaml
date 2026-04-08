@@ -1,65 +1,78 @@
-# Copy to config.yaml and fill in your values
+# Get API id/hash: https://my.telegram.org/apps
+telethon:
+  api_id: 12345678
+  api_hash: "your_api_hash_here"
+  session_name: "relay_session"
 
-# API-Football (https://www.api-football.com/)
-api_football:
-  base_url: "https://v3.football.api-sports.io"
-  api_key: "YOUR_API_FOOTBALL_KEY"
+relay:
+  # Listen to multiple sources; optional per-route source_chat_ids limits that rule.
+  source_chat_ids:
+    - "123456789"
+    - "987654321"
 
-# Telegram
-telegram:
-  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"
-  chat_id: "YOUR_CHAT_ID"  # Can be user ID or group ID
+  # If you use routes below, target_chat_id can be empty (or use fallback_target_chat_id).
+  target_chat_id: ""
 
-# Leagues to monitor (API-Football league IDs)
-# https://www.api-football.com/documentation-v3#tag/Leagues
-league_ids:
-  - 39   # Premier League
-  - 140  # La Liga
-  - 135  # Serie A
-  - 78   # Bundesliga
-  - 61   # Ligue 1
-  # Add 15+ leagues as needed
+  control_chat_id: ""
 
-# Polling interval in seconds (respect API rate limits)
-poll_interval_seconds: 30
+  # Buyer-style alerts: route by "Bet Type:" line — one message -> one group.
+  routes:
+    - name: "1H Goal (Yes) Opportunity"
+      match:
+        contains: ["1H Goal (Yes) Opportunity"]
+      target_chat_id: "https://t.me/+INVITE_HASH_OR_-100_ID"
 
-# Schedule (local time, Europe/London by default)
-schedule:
-  timezone: "Europe/London"
-  monday_friday:
-    start: "18:00"   # 6pm
-    end: "22:30"     # 10:30pm
-  saturday:
-    start: "12:00"   # 12pm
-    end: "22:30"     # 10:30pm
-  sunday:
-    start: "12:00"   # 12pm
-    end: "21:30"     # 9:30pm
+    - name: "1.5+ Goals Opportunity"
+      match:
+        contains: ["1.5+ Goals Opportunity"]
+      target_chat_id: "https://t.me/+INVITE_HASH_OR_-100_ID"
 
-# Alert rules (can be updated without code change)
-rules:
-  # Preferred bookmaker name for odds (e.g. Bet365, Pinnacle).
-  # If empty, all available bookmakers will be used.
-  bookmaker: "Bet365"
+    - name: "BTTS Opportunity"
+      match:
+        contains: ["BTTS Opportunity"]
+      target_chat_id: "https://t.me/+INVITE_HASH_OR_-100_ID"
 
-  over_05_first_half:
-    enabled: true
-    market_name: "Over 0.5 goals – 1st half"
-    min_odds: 1.50
-    max_minute: 45
-    require_score_0_0: true
+    - name: "New Foul Alert (Yellow Card bot)"
+      match:
+        contains: ["New Foul Alert"]
+      source_chat_ids:
+        - "987654321"
+      target_chat_id: "https://t.me/+jFIkgl-i638yYTM0"
 
-  btts_yes:
-    enabled: true
-    market_name: "Both Teams To Score – Yes"
-    min_odds: 2.00
-    min_minute: 1
-    max_minute: 90
-    require_market_alive: true  # At least one team hasn't scored yet
+    - name: "Over 1 FHG"
+      match:
+        regex: 'Bet Type:\s*Over\s*1\s*FHG'
+      target_chat_id: "-1001111111111"
 
-  over_05_full_at_60:
-    enabled: true
-    market_name: "Over 0.5 goals – full match"
-    min_odds: 1.80
-    from_minute: 60
-    require_score_0_0: true
+    - name: "BTTS"
+      match:
+        regex: 'Bet Type:.*BTTS'
+      target_chat_id: "-1002222222222"
+
+    - name: "1.5+ Goals"
+      match:
+        regex: 'Bet Type:.*1\.5\s*\+?\s*Goals'
+      target_chat_id: "-1003333333333"
+
+    - name: "Yellow Card"
+      match:
+        regex: 'Bet Type:.*Yellow\s*Card'
+      source_chat_ids:
+        - "987654321"
+      target_chat_id: "-1004444444444"
+
+  fallback_target_chat_id: ""
+
+  # Optional: same source chat — only relay messages that pass this first, then routes.
+  filter:
+    require_any_contains: ["Bet Type"]
+    # require_regex: "Bet Type:"
+    # skip_if_any_contains: ["promo"]
+    # skip_if_regex: "(?i)unwanted"
+
+transform:
+  prepend_text: ""
+  append_text: ""
+  replace:
+    - from: "oddsalerts.com"
+      to: "Odds Provider"
